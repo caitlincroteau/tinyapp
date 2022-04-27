@@ -10,11 +10,17 @@ const urlDatabase = {
 app.get("/", (req, res) => {
   res.send("Hello");
 });
+//server sends a response
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
-//log to browser as a json STRING rep of the urlDatabase object.
+//server sends a JSON response: parameter (the urlDatabase object) converted to:
+//json STRING rep.
+
+app.get("/hello", (req, res) => {
+  res.send("<html><body>Hello <b>World</b></body></html>\n");
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
