@@ -3,6 +3,13 @@ const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
 
+function generateRandomString() {
+  const random_string = Math.random().toString(32).substring(2, 5) + Math.random().toString(32).substring(2, 5);    
+  return random_string
+}
+
+let num = generateRandomString();
+
 app.use(bodyParser.urlencoded({extended: true}));
 //allows us to convert the request body from a Buffer into a string
 //then adds the data to the req(request) object under the key body
@@ -48,7 +55,7 @@ app.get("/urls/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   console.log(req.body);
   //log the POST request body to the console
-  res.send("Ok");
+  res.send("Ok: " + num);
 });
 
 app.listen(PORT, () => {
