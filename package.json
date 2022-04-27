@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/caitlincroteau/tinyapp/issues"
   },
-  "homepage": "https://github.com/caitlincroteau/tinyapp#readme"
+  "homepage": "https://github.com/caitlincroteau/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.0"
+  }
 }
