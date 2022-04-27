@@ -1,6 +1,13 @@
 const express = require("express");
 const app = express();
 const PORT = 8080;
+const bodyParser = require("body-parser");
+
+app.use(bodyParser.urlencoded({extended: true}));
+//allows us to convert the request body from a Buffer into a string
+//then adds the data to the req(request) object under the key body
+//using our form as an example, the data in the input field will be avaialbe to us 
+//in the req.body.longURL variable, which we can store in our urlDatabase object
 
 app.set("view engine", "ejs");
 
@@ -36,6 +43,12 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
+});
+
+app.post("/urls", (req, res) => {
+  console.log(req.body);
+  //log the POST request body to the console
+  res.send("Ok");
 });
 
 app.listen(PORT, () => {
