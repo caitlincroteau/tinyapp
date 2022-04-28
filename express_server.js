@@ -1,4 +1,7 @@
+//requirements
 const express = require("express");
+
+//setup and middlewares
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
@@ -16,6 +19,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 //using our form as an example, the data in the input field will be avaialbe to us 
 //in the req.body.longURL variable, which we can store in our urlDatabase object
 
+//set ejs as view engine
 app.set("view engine", "ejs");
 
 const urlDatabase = {
@@ -23,6 +27,9 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+//routes / endpoints /crud operations
+
+//GET
 app.get("/", (req, res) => {
   res.send("Hello");
 });
@@ -38,26 +45,51 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+//route for all urls
+//includes ejs template object
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
+//get route to show the form for making a tiny URL
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+//route for one single shortURL
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
 
-app.post("/urls", (req, res) => {
-  console.log(req.body);
-  //log the POST request body to the console
-  res.send("Ok: " + num);
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
 });
 
+//POST
+
+//post route to receive the new tiny url from form submission
+//and redirect to tiny url page
+app.post("/urls", (req, res) => {
+ //console.log("req.body: ", req.body);
+
+  urlDatabase[num] = req.body.longURL;
+  //console.log(urlDatabase)
+
+  res.redirect(302, "/urls/" + num)
+  //log the POST request body to the console
+  //res.send("Ok: " + num);
+});
+
+//LISTENER
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
+
+//Do I need to implement these edge case (from URL shortening part 2):
+// What would happen if a client requests a non-existent shortURL?
+// What happens to the urlDatabase when the server is restarted?
+// What type of status code do our redirects have? What does this status code mean?
