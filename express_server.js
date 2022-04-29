@@ -29,25 +29,32 @@ const urlDatabase = {
 
 //routes / endpoints /crud operations
 
-//GET
+//server sends a response
 app.get("/", (req, res) => {
   res.send("Hello");
 });
-//server sends a response
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-//server sends a JSON response: parameter (the urlDatabase object) converted to:
-//json STRING rep.
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+//server sends a JSON response: parameter (the urlDatabase object) converted to:
+//json STRING rep.
+app.get("/urls.json", (req, res) => {
+  res.json(urlDatabase);
+});
+
+
+//post route to receive the new tiny url from form submission
+//and redirect to tiny url page
+app.post("/urls", (req, res) => {
+   urlDatabase[num] = req.body.longURL;
+
+   res.redirect(302, "/urls/" + num)
+ });
+
 //route for all urls
 //includes ejs template object
-
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase }; //passes the database/object to the urls_index page.
   
@@ -65,31 +72,27 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+
+//Update long URL's short URL
+app.post("/urls/:shortURL", (req, res) => { 
+  const shortURL = req.params.shortURL;
+  
+  urlDatabase[shortURL] = req.body.updatedURL;
+  res.redirect("/urls")
 });
 
-//POST
-
-//post route to receive the new tiny url from form submission
-//and redirect to tiny url page
-app.post("/urls", (req, res) => {
- //console.log("req.body: ", req.body);
-
-  urlDatabase[num] = req.body.longURL;
-  //console.log(urlDatabase)
-
-  res.redirect(302, "/urls/" + num)
-  //log the POST request body to the console
-  //res.send("Ok: " + num);
-});
-
+//delete URL
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
 
   res.redirect(302, "/urls");
 });
+
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
+});
+
 
 //LISTENER
 app.listen(PORT, () => {
