@@ -47,8 +47,10 @@ app.get("/hello", (req, res) => {
 
 //route for all urls
 //includes ejs template object
+
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase }; //passes the database/object to the urls_index page.
+  
   res.render("urls_index", templateVars);
 });
 
@@ -81,6 +83,12 @@ app.post("/urls", (req, res) => {
   res.redirect(302, "/urls/" + num)
   //log the POST request body to the console
   //res.send("Ok: " + num);
+});
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+  delete urlDatabase[req.params.shortURL];
+
+  res.redirect(302, "/urls");
 });
 
 //LISTENER
