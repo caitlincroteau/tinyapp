@@ -115,6 +115,12 @@ app.post("/login", (req, res) => {
   res.redirect(302, "/urls");
 });
 
+app.post("/logout", (req, res) => {
+  res.clearCookie('username');
+
+  res.redirect(302, "/urls");
+});
+
 
 //LISTENER
 app.listen(PORT, () => {
