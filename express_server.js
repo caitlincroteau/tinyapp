@@ -55,6 +55,7 @@ app.get("/urls.json", (req, res) => {
 //and redirect to tiny url page
 app.post("/urls", (req, res) => {
    urlDatabase[num] = req.body.longURL;
+   
 
    res.redirect(302, "/urls/" + num)
  });
