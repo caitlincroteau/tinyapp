@@ -1,5 +1,6 @@
 //requirements
 const express = require("express");
+const cookieParser = require('cookie-parser');
 
 //setup and middlewares
 const app = express();
@@ -19,6 +20,10 @@ app.use(bodyParser.urlencoded({extended: true}));
 //using our form as an example, the data in the input field will be avaialbe to us 
 //in the req.body.longURL variable, which we can store in our urlDatabase object
 
+//sets up cookies
+app.use(cookieParser());
+
+
 //set ejs as view engine
 app.set("view engine", "ejs");
 
@@ -26,6 +31,7 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
 
 //routes / endpoints /crud operations
 
@@ -53,22 +59,31 @@ app.post("/urls", (req, res) => {
    res.redirect(302, "/urls/" + num)
  });
 
+
 //route for all urls
 //includes ejs template object
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase }; //passes the database/object to the urls_index page.
-  
+  const templateVars = { 
+    urls: urlDatabase,
+    username: req.cookies["username"] 
+  }; //passes the database/object to the urls_index page.
+
   res.render("urls_index", templateVars);
 });
 
 //get route to show the form for making a tiny URL
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"],
+  };
+  
+  res.render("urls_new", templateVars);
 });
 
 //route for one single shortURL
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] };
+  
   res.render("urls_show", templateVars);
 });
 
@@ -91,6 +106,13 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
+});
+
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+  res.cookie('username', username);
+
+  res.redirect(302, "/urls");
 });
 
 
