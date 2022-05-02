@@ -32,6 +32,14 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+function getTemplateVars(req) {
+  const templateVars = { 
+    username: req.cookies["username"] 
+  };
+  return templateVars;
+};
+
+
 
 //routes / endpoints /crud operations
 
@@ -66,7 +74,7 @@ app.post("/urls", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = { 
     urls: urlDatabase,
-    username: req.cookies["username"] 
+    ...getTemplateVars(req)
   }; //passes the database/object to the urls_index page.
 
   res.render("urls_index", templateVars);
@@ -74,16 +82,13 @@ app.get("/urls", (req, res) => {
 
 //get route to show the form for making a tiny URL
 app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    username: req.cookies["username"],
-  };
   
-  res.render("urls_new", templateVars);
+  res.render("urls_new", getTemplateVars(req));
 });
 
 //route for one single shortURL
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], ...getTemplateVars(req) };
   
   res.render("urls_show", templateVars);
 });
