@@ -7,12 +7,30 @@ const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
 
-function generateRandomString() {
+//function to generate a random ID for new user IDs and for new tiny URLS
+let randomId = function generateRandomString() {
   const random_string = Math.random().toString(32).substring(2, 5) + Math.random().toString(32).substring(2, 5);    
   return random_string
-}
+};
 
-let num = generateRandomString();
+//object to store user's saved URLS
+const urlDatabase = {
+  "b2xVn2": "http://www.lighthouselabs.ca",
+  "9sm5xK": "http://www.google.com"
+};
+
+//object to store user information
+const users = {};
+
+//function to retrieve variables from a template
+function getTemplateVars(req) {
+  const templateVars = { 
+    //username: req.cookies["username"],
+    user: users[req.cookies["user_id"]]
+  };
+  return templateVars;
+};
+
 
 app.use(bodyParser.urlencoded({extended: true}));
 //allows us to convert the request body from a Buffer into a string
@@ -26,19 +44,6 @@ app.use(cookieParser());
 
 //set ejs as view engine
 app.set("view engine", "ejs");
-
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
-
-function getTemplateVars(req) {
-  const templateVars = { 
-    username: req.cookies["username"] 
-  };
-  return templateVars;
-};
-
 
 
 //routes / endpoints /crud operations
@@ -62,10 +67,9 @@ app.get("/urls.json", (req, res) => {
 //post route to receive the new tiny url from form submission
 //and redirect to tiny url page
 app.post("/urls", (req, res) => {
-   urlDatabase[num] = req.body.longURL;
-   
-
-   res.redirect(302, "/urls/" + num)
+   urlDatabase[randomId] = req.body.longURL;
+  
+   res.redirect(302, "/urls/" + randomId)
  });
 
 
@@ -73,22 +77,25 @@ app.post("/urls", (req, res) => {
 //includes ejs template object
 app.get("/urls", (req, res) => {
   const templateVars = { 
-    urls: urlDatabase,
-    ...getTemplateVars(req)
-  }; //passes the database/object to the urls_index page.
+    urls: urlDatabase, //passes the database/object to the urls_index page
+    user: users[req.cookies["user_id"]]
+  };
 
   res.render("urls_index", templateVars);
 });
 
 //get route to show the form for making a tiny URL
 app.get("/urls/new", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user_id"]]
+  };
   
-  res.render("urls_new", getTemplateVars(req));
+  res.render("urls_new", templateVars);
 });
 
 //route for one single shortURL
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], ...getTemplateVars(req) };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_id"]] };
   
   res.render("urls_show", templateVars);
 });
@@ -97,8 +104,9 @@ app.get("/urls/:shortURL", (req, res) => {
 //Update long URL's short URL
 app.post("/urls/:shortURL", (req, res) => { 
   const shortURL = req.params.shortURL;
-  
+
   urlDatabase[shortURL] = req.body.updatedURL;
+
   res.redirect("/urls")
 });
 
@@ -111,22 +119,48 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
+
   res.redirect(longURL);
 });
 
 app.post("/login", (req, res) => {
   const username = req.body.username;
-  res.cookie('username', username);
 
+  res.cookie('username', username);
   res.redirect(302, "/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
-
+  
+  res.clearCookie('user_id');
   res.redirect(302, "/urls");
 });
 
+app.get("/register", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user_id"]]
+  };
+
+  res.render("register",templateVars);
+});
+
+app.post("/register", (req, res) => {
+  //add new user
+  const { email, password } = req.body;
+  let newUser = randomId();
+  users[newUser] = {
+    user_id: newUser,
+    email: email,
+    password: password
+   };
+
+  console.log(users) 
+
+  //set cookie to user_id
+  res.cookie('user_id', users[newUser]["user_id"]);
+  res.redirect(302, "/urls");
+  
+});
 
 //LISTENER
 app.listen(PORT, () => {
