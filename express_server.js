@@ -20,15 +20,37 @@ const urlDatabase = {
 };
 
 //object to store user information
-const users = {};
+const users = {
+  "userRandomID": {
+    user_id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    user_id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+};
 
 //function to retrieve variables from a template
-function getTemplateVars(req) {
-  const templateVars = { 
-    //username: req.cookies["username"],
-    user: users[req.cookies["user_id"]]
-  };
-  return templateVars;
+// function getTemplateVars(req) {
+//   const templateVars = { 
+//     //username: req.cookies["username"],
+//     user: users[req.cookies["user_id"]]
+//   };
+//   return templateVars;
+// };
+
+//returns an array
+const emailLookup = function(usersDB, inputEmail) {
+  for (let user in usersDB) {
+    let email = usersDB[user]["email"];
+    if (inputEmail === email) {
+      return true;
+    }
+  }
+  return false;
 };
 
 
@@ -145,21 +167,29 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  //add new user
   const { email, password } = req.body;
-  let newUser = randomId();
-  users[newUser] = {
-    user_id: newUser,
-    email: email,
-    password: password
-   };
+ 
+  //error handling
+  if (email === "" || password === "") {
+    res.status(404).send("Email and password fields cannot be left blank.")
 
-  console.log(users) 
+  } else if (emailLookup(users, email)){
+    res.status(404).send("An account with that email address already exists.")
 
-  //set cookie to user_id
-  res.cookie('user_id', users[newUser]["user_id"]);
-  res.redirect(302, "/urls");
-  
+  } else {
+    //add new user
+    let newUser = randomId();
+    users[newUser] = {
+      user_id: newUser,
+      email: email,
+      password: password
+    };
+    
+    //set cookie to user_id
+    res.cookie('user_id', users[newUser]["user_id"]);
+    res.redirect(302, "/urls");
+  };
+
 });
 
 //LISTENER
