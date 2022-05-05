@@ -14,17 +14,33 @@ const generateRandomString = function() {
 };
 
 //object to store user's saved URLS
+//Old URL database
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
+
+
+//new URL databse
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+        longURL: "https://www.tsn.ca",
+        userID: "userRandomID"
+    },
+    i3BoGr: {
+        longURL: "https://www.google.ca",
+        userID: "userRandomID"
+    }
 };
+
+
 
 //object to store user information
 const users = {
   "userRandomID": {
     user_id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: "purple"
   },
   "user2RandomID": {
     user_id: "user2RandomID",
@@ -84,10 +100,16 @@ app.get("/urls.json", (req, res) => {
 //post route to receive the new tiny url from form submission
 //and redirect to tiny url page
 app.post("/urls", (req, res) => {
-  const tinyURL = generateRandomString();
-  urlDatabase[tinyURL] = req.body.longURL;
+  const userID = req.cookies["user_id"];
   
-  res.redirect(302, "/urls/" + tinyURL);
+  if(userID) {
+    const tinyURL = generateRandomString();
+    urlDatabase[tinyURL] = { longURL: req.body.longURL, userID: userID };
+    
+    return res.redirect("/urls/" + tinyURL);
+  }
+
+  res.status(401).send("Must be logged in to create a new tiny url.");
 });
 
 //route for all urls
@@ -106,13 +128,19 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: users[req.cookies["user_id"]]
   };
+
+  if(!templateVars.user) {
+    return res.redirect("/login")
+  }
   
   res.render("urls_new", templateVars);
 });
 
 //route for one single shortURL
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_id"]] };
+  const shortURL = req.params.shortURL
+  const longURL = urlDatabase[shortURL].longURL
+  const templateVars = { shortURL, longURL, user: users[req.cookies["user_id"]] };
   
   res.render("urls_show", templateVars);
 });
@@ -120,7 +148,7 @@ app.get("/urls/:shortURL", (req, res) => {
 //Update long URL's short URL
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  urlDatabase[shortURL] = req.body.updatedURL;
+  urlDatabase[shortURL].longURL = req.body.updatedURL;
 
   res.redirect("/urls");
 });
@@ -129,11 +157,11 @@ app.post("/urls/:shortURL", (req, res) => {
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
 
-  res.redirect(302, "/urls");
+  res.redirect("/urls");
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
 
   res.redirect(longURL);
 });
@@ -154,7 +182,7 @@ app.post("/login", (req, res) => {
   //set cookie as user_id
   } else {
     res.cookie('user_id', user.user_id);
-    res.redirect(302, "/urls");
+    res.redirect("/urls");
   }
 });
 
@@ -163,14 +191,18 @@ app.get("/login", (req, res) => {
     user: users[req.cookies["user_id"]]
   };
 
-  res.render("login", templateVars);
+  if (!templateVars.user) {
+    return res.render("login", templateVars);
+  }
+  
+  res.redirect("/urls");
 });
 
 //logout
 app.post("/logout", (req, res) => {
   
   res.clearCookie('user_id');
-  res.redirect(302, "/urls");
+  res.redirect("/urls");
 });
 
 //register
@@ -179,7 +211,11 @@ app.get("/register", (req, res) => {
     user: users[req.cookies["user_id"]]
   };
 
-  res.render("register",templateVars);
+  if(!templateVars.user) {
+    return res.render("register",templateVars);
+  }
+
+  res.redirect("urls")
 });
 
 app.post("/register", (req, res) => {
@@ -205,7 +241,7 @@ app.post("/register", (req, res) => {
     
     //set cookie to user_id
     res.cookie('user_id', users[newUser]["user_id"]);
-    res.redirect(302, "/urls");
+    res.redirect("/urls");
   }
 });
 
