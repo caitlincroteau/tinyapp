@@ -42,16 +42,28 @@ const users = {
 //   return templateVars;
 // };
 
-//returns an array
-const emailLookup = function(usersDB, inputEmail) {
+//returns true if input email is found in users database
+// const emailLookup = function(usersDB, inputEmail) {
+//   for (let user in usersDB) {
+//     let email = usersDB[user]["email"];
+//     if (inputEmail === email) {
+//       return true;
+//     }
+//   }
+//   return false;
+// };
+
+//if input email matches db email, return the user object. Else, return false.
+const userLookup = function(usersDB, inputEmail) {
   for (let user in usersDB) {
     let email = usersDB[user]["email"];
     if (inputEmail === email) {
-      return true;
+      return user;
     }
   }
-  return false;
+  return undefined;
 };
+
 
 
 app.use(bodyParser.urlencoded({extended: true}));
@@ -146,10 +158,19 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const username = req.body.username;
+  const { email, password } = req.body;
+  const user_id = userLookup(users, email);
 
-  res.cookie('username', username);
-  res.redirect(302, "/urls");
+  if (!user_id) {
+    res.status(403).send("Email not found in database.")
+
+  } else if (password !== users[user_id]["password"]) {
+    res.status(403).send("Incorrect password.");
+    
+  } else {
+    res.cookie('user_id', user_id);
+    res.redirect(302, "/urls");
+  }
 });
 
 app.get("/login", (req, res) => {
@@ -176,12 +197,15 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
+  const user_id = userLookup(users, email);
+  console.log("user_id", user_id)
  
   //error handling
   if (email === "" || password === "") {
     res.status(404).send("Email and password fields cannot be left blank.")
 
-  } else if (emailLookup(users, email)){
+    //if email is already in the database
+  } else if (users[user_id] !== undefined && users[user_id]["email"] === email){
     res.status(404).send("An account with that email address already exists.")
 
   } else {
