@@ -8,9 +8,9 @@ const PORT = 8080;
 const bodyParser = require("body-parser");
 
 //function to generate a random ID for new user IDs and for new tiny URLS
-let randomId = function generateRandomString() {
-  const random_string = Math.random().toString(32).substring(2, 5) + Math.random().toString(32).substring(2, 5);    
-  return random_string
+const generateRandomString = function() {
+  const randomString = Math.random().toString(32).substring(2, 5) + Math.random().toString(32).substring(2, 5);
+  return randomString;
 };
 
 //object to store user's saved URLS
@@ -22,65 +22,49 @@ const urlDatabase = {
 //object to store user information
 const users = {
   "userRandomID": {
-    user_id: "userRandomID", 
-    email: "user@example.com", 
+    user_id: "userRandomID",
+    email: "user@example.com",
     password: "purple-monkey-dinosaur"
   },
- "user2RandomID": {
-    user_id: "user2RandomID", 
-    email: "user2@example.com", 
+  "user2RandomID": {
+    user_id: "user2RandomID",
+    email: "user2@example.com",
     password: "dishwasher-funk"
   }
 };
 
 //function to retrieve variables from a template
 // function getTemplateVars(req) {
-//   const templateVars = { 
+//   const templateVars = {
 //     //username: req.cookies["username"],
 //     user: users[req.cookies["user_id"]]
 //   };
 //   return templateVars;
 // };
 
-//returns true if input email is found in users database
-// const emailLookup = function(usersDB, inputEmail) {
-//   for (let user in usersDB) {
-//     let email = usersDB[user]["email"];
-//     if (inputEmail === email) {
-//       return true;
-//     }
-//   }
-//   return false;
-// };
-
-//if input email matches db email, return the user object. Else, return false.
+//if input email matches db email, return the user object. Else, return undefined.
 const userLookup = function(usersDB, inputEmail) {
-  for (let user in usersDB) {
-    let email = usersDB[user]["email"];
+  for (let userId in usersDB) {
+    let email = usersDB[userId]["email"];
     if (inputEmail === email) {
-      return user;
+      return usersDB[userId];
     }
   }
   return undefined;
 };
 
-
-
 app.use(bodyParser.urlencoded({extended: true}));
 //allows us to convert the request body from a Buffer into a string
 //then adds the data to the req(request) object under the key body
-//using our form as an example, the data in the input field will be avaialbe to us 
+//using our form as an example, the data in the input field will be avaialbe to us
 //in the req.body.longURL variable, which we can store in our urlDatabase object
 
 //sets up cookies
 app.use(cookieParser());
 
-
 //set ejs as view engine
 app.set("view engine", "ejs");
 
-
-//routes / endpoints /crud operations
 
 //server sends a response
 app.get("/", (req, res) => {
@@ -97,20 +81,19 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-
 //post route to receive the new tiny url from form submission
 //and redirect to tiny url page
 app.post("/urls", (req, res) => {
-   urlDatabase[randomId] = req.body.longURL;
+  const tinyURL = generateRandomString();
+  urlDatabase[tinyURL] = req.body.longURL;
   
-   res.redirect(302, "/urls/" + randomId)
- });
-
+  res.redirect(302, "/urls/" + tinyURL);
+});
 
 //route for all urls
 //includes ejs template object
 app.get("/urls", (req, res) => {
-  const templateVars = { 
+  const templateVars = {
     urls: urlDatabase, //passes the database/object to the urls_index page
     user: users[req.cookies["user_id"]]
   };
@@ -134,14 +117,12 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-
 //Update long URL's short URL
-app.post("/urls/:shortURL", (req, res) => { 
+app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-
   urlDatabase[shortURL] = req.body.updatedURL;
 
-  res.redirect("/urls")
+  res.redirect("/urls");
 });
 
 //delete URL
@@ -157,18 +138,22 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
+//login
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  const user_id = userLookup(users, email);
+  const user = userLookup(users, email);
 
-  if (!user_id) {
-    res.status(403).send("Email not found in database.")
-
-  } else if (password !== users[user_id]["password"]) {
+  //if user not in db
+  if (!user) {
+    res.status(403).send("Email not found in database.");
+  
+    //if passwords don't match
+  } else if (password !== user.password) {
     res.status(403).send("Incorrect password.");
-    
+  
+  //set cookie as user_id
   } else {
-    res.cookie('user_id', user_id);
+    res.cookie('user_id', user.user_id);
     res.redirect(302, "/urls");
   }
 });
@@ -181,12 +166,14 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
+//logout
 app.post("/logout", (req, res) => {
   
   res.clearCookie('user_id');
   res.redirect(302, "/urls");
 });
 
+//register
 app.get("/register", (req, res) => {
   const templateVars = {
     user: users[req.cookies["user_id"]]
@@ -197,20 +184,19 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
-  const user_id = userLookup(users, email);
-  console.log("user_id", user_id)
+  const user = userLookup(users, email);
  
-  //error handling
+  //if no email or password entered
   if (email === "" || password === "") {
-    res.status(404).send("Email and password fields cannot be left blank.")
+    res.status(404).send("Email and password fields cannot be left blank.");
 
-    //if email is already in the database
-  } else if (users[user_id] !== undefined && users[user_id]["email"] === email){
-    res.status(404).send("An account with that email address already exists.")
+  //if email is already in the database
+  } else if (user !== undefined && user.email === email) {
+    res.status(404).send("An account with that email address already exists.");
 
   } else {
     //add new user
-    let newUser = randomId();
+    const newUser = generateRandomString();
     users[newUser] = {
       user_id: newUser,
       email: email,
@@ -220,8 +206,7 @@ app.post("/register", (req, res) => {
     //set cookie to user_id
     res.cookie('user_id', users[newUser]["user_id"]);
     res.redirect(302, "/urls");
-  };
-
+  }
 });
 
 //LISTENER
