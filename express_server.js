@@ -45,7 +45,7 @@ const users = {
   "user2RandomID": {
     user_id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: "funk"
   }
 };
 
@@ -67,6 +67,17 @@ const userLookup = function(usersDB, inputEmail) {
     }
   }
   return undefined;
+};
+
+//returns urls object of urls that match input user id with user id in urlDatabse
+const urlsForUser = function(id) {
+  const urls = {};
+  for (let shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      urls[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return urls;
 };
 
 app.use(bodyParser.urlencoded({extended: true}));
@@ -112,16 +123,8 @@ app.post("/urls", (req, res) => {
   res.status(401).send("Must be logged in to create a new tiny url.");
 });
 
-const urlsForUser = function(id) {
-  const urls = {};
-  for (let shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
-      urls[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  console.log(urls)
-  return urls;
-};
+
+
 //route for all urls
 //includes ejs template object
 app.get("/urls", (req, res) => {
@@ -153,9 +156,14 @@ app.get("/urls/new", (req, res) => {
 
 //route for one single shortURL
 app.get("/urls/:shortURL", (req, res) => {
-  const shortURL = req.params.shortURL
-  const longURL = urlDatabase[shortURL].longURL
-  const templateVars = { shortURL, longURL, user: users[req.cookies["user_id"]] };
+  const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[shortURL].longURL;
+  const userInputID = req.cookies["user_id"];
+  const templateVars = { shortURL, longURL, user: users[userInputID] };
+
+  if (!userInputID || urlDatabase[shortURL].userID !== userInputID) {
+    return res.send("Must be logged in as correct user to see short URL.")
+  }
   
   res.render("urls_show", templateVars);
 });
