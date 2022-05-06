@@ -33,8 +33,6 @@ const urlDatabase = {
     }
 };
 
-
-
 //object to store user information
 const users = {
   "userRandomID": {
@@ -123,8 +121,6 @@ app.post("/urls", (req, res) => {
   res.status(401).send("Must be logged in to create a new tiny url.");
 });
 
-
-
 //route for all urls
 //includes ejs template object
 app.get("/urls", (req, res) => {
@@ -157,12 +153,19 @@ app.get("/urls/new", (req, res) => {
 //route for one single shortURL
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL].longURL;
   const userInputID = req.cookies["user_id"];
+  
+   //if the url doesn't exist
+   if (!urlDatabase[shortURL]) {
+    return res.send("The short URL does not exist.")
+  }
+
+  const longURL = urlDatabase[shortURL].longURL;
   const templateVars = { shortURL, longURL, user: users[userInputID] };
 
+  //if user is not logged in or short url doesn't belong to user
   if (!userInputID || urlDatabase[shortURL].userID !== userInputID) {
-    return res.send("Must be logged in as correct user to see short URL.")
+    return res.status(401).send("Must be logged in as correct user to see short URL.")
   }
   
   res.render("urls_show", templateVars);
@@ -170,7 +173,19 @@ app.get("/urls/:shortURL", (req, res) => {
 
 //Update long URL's short URL
 app.post("/urls/:shortURL", (req, res) => {
+  const userInputID = req.cookies["user_id"];
   const shortURL = req.params.shortURL;
+
+  //if the url doesn't exist
+  if (!urlDatabase[shortURL]) {
+    return res.send("The short URL does not exist.")
+  }
+
+  //if user is not logged in or short url doesn't belong to user
+  if (!userInputID || userInputID !== urlDatabase[shortURL].userID) {
+    return res.status(401).send("You do not have permission to edit this short URL")
+  }
+
   urlDatabase[shortURL].longURL = req.body.updatedURL;
 
   res.redirect("/urls");
@@ -178,6 +193,19 @@ app.post("/urls/:shortURL", (req, res) => {
 
 //delete URL
 app.post("/urls/:shortURL/delete", (req, res) => {
+  const userInputID = req.cookies["user_id"];
+  const shortURL = req.params.shortURL;
+
+   //if the url doesn't exist
+   if (!urlDatabase[shortURL]) {
+    return res.send("The short URL does not exist.")
+  }
+
+  //if user not logged in or short url doesn't belong to user
+  if (!userInputID || userInputID !== urlDatabase[shortURL].userID) {
+    return res.status(401).send("You do not have permission to delete this short URL")
+  }
+
   delete urlDatabase[req.params.shortURL];
 
   res.redirect("/urls");
