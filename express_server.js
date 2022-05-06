@@ -1,6 +1,7 @@
 //requirements
 const express = require("express");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
 
 //setup and middlewares
 const app = express();
@@ -233,8 +234,8 @@ app.post("/login", (req, res) => {
   if (!user) {
     res.status(403).send("Email not found in database.");
   
-    //if passwords don't match
-  } else if (password !== user.password) {
+    //if hashed passwords don't match
+  } else if (!bcrypt.compareSync(password, user.password)) {
     res.status(403).send("Incorrect password.");
   
   //set cookie as user_id
@@ -291,11 +292,14 @@ app.post("/register", (req, res) => {
   } else {
     //add new user
     const newUser = generateRandomString();
+    const hashedPassword = bcrypt.hashSync(password, 10);
+
     users[newUser] = {
       user_id: newUser,
       email: email,
-      password: password
+      password: hashedPassword
     };
+    console.log("user DB", users)
     
     //set cookie to user_id
     res.cookie('user_id', users[newUser]["user_id"]);
