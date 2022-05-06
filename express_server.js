@@ -160,8 +160,15 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls");
 });
 
+//allow anyone to use shortURL
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL;
+  const shortURL = req.params.shortURL
+  
+  if(!urlDatabase[shortURL]) {
+    return res.send("Short URL does not exist.")
+  }
+
+  const longURL = urlDatabase[shortURL].longURL;
 
   res.redirect(longURL);
 });
