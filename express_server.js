@@ -3,7 +3,9 @@ const express = require("express");
 //const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session')
 const bcrypt = require('bcryptjs');
-const getUserByEmail = require('./helpers');
+const { getUserByEmail } = require('./helpers');
+const { generateRandomString } = require('./helpers');
+const { urlsForUser } = require('./helpers');
 
 //setup and middlewares
 const app = express();
@@ -30,45 +32,11 @@ app.use(cookieSession({
 app.set("view engine", "ejs");
 
 
-//function to generate a random ID for new user IDs and for new tiny URLS
-const generateRandomString = function() {
-  const randomString = Math.random().toString(32).substring(2, 5) + Math.random().toString(32).substring(2, 5);
-  return randomString;
-};
-
-//object to store user's saved URLS
-//Old URL database
-// const urlDatabase = {
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-// };
-
-
 //new URL databse
-const urlDatabase = {
-  b6UTxQ: {
-        longURL: "https://www.tsn.ca",
-        userID: "userRandomID"
-    },
-    i3BoGr: {
-        longURL: "https://www.google.ca",
-        userID: "userRandomID"
-    }
-};
+const urlDatabase = {};
 
 //object to store user information
-const users = {
-  // "userRandomID": {
-  //   user_id: "userRandomID",
-  //   email: "user@example.com",
-  //   password: "purple"
-  // },
-  // "user2RandomID": {
-  //   user_id: "user2RandomID",
-  //   email: "user2@example.com",
-  //   password: "funk"
-  // }
-};
+const users = {};
 
 //function to retrieve variables from a template
 // function getTemplateVars(req) {
@@ -78,22 +46,6 @@ const users = {
 //   };
 //   return templateVars;
 // };
-
-
-
-//returns urls object of urls that match input user id with user id in urlDatabse
-const urlsForUser = function(id) {
-  const urls = {};
-  for (let shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
-      urls[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return urls;
-};
-
-
-
 
 //server sends a response
 app.get("/", (req, res) => {
@@ -131,9 +83,10 @@ app.post("/urls", (req, res) => {
 app.get("/urls", (req, res) => {
   //const inputUserID = req.cookies["user_id"];
   const inputUserID = req.session.user_id;
-  const urls = urlsForUser(inputUserID);
+  const urls = urlsForUser(inputUserID, urlDatabase);
   const user = users[inputUserID];
   const templateVars = { inputUserID, urls, user };
+  console.log("URLS", urls)
 
   //if user not logged in.
   if (!inputUserID) {

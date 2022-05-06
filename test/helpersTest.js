@@ -1,5 +1,7 @@
 const assert = require('chai').assert;
-const getUserByEmail = require('../helpers.js');
+const { getUserByEmail } = require('../helpers');
+const { generateRandomString } = require('../helpers');
+const { urlsForUser } = require('../helpers');
 
 const testUsers = {
   "userRandomID": {
@@ -11,6 +13,21 @@ const testUsers = {
     id: "user2RandomID", 
     email: "user2@example.com", 
     password: "dishwasher-funk"
+  }
+};
+
+const testUrlDatabase = {
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "userRandomID"
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "user2RandomID"
+  },
+  i3BoGr: {
+    longURL: "https://www.cats.com",
+    userID: "userRandomID"
   }
 };
 
@@ -27,4 +44,29 @@ describe('getUserByEmail', function() {
     assert.deepEqual(user, expectedUserID);
   });
 
+});
+
+describe('generateRandomString', function() {
+  it('should generate a random string', function() {
+    const newString = generateRandomString();
+    assert(typeof newString, "string")
+  });
+});
+
+describe('urlsForUser', function() {
+  it('should return an object of short urls from url database that match input user id', function() {
+    const user = "userRandomID";
+    const urls = urlsForUser(user, testUrlDatabase);
+    const expectedUrls = {
+      b6UTxQ: {
+        longURL: "https://www.tsn.ca",
+        userID: "userRandomID"
+      },
+      i3BoGr: {
+        longURL: "https://www.cats.com",
+        userID: "userRandomID"
+      }
+    }  
+    assert.deepEqual(urls, expectedUrls)
+  });
 });
