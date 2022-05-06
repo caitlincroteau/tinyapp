@@ -1,12 +1,33 @@
 //requirements
 const express = require("express");
-const cookieParser = require('cookie-parser');
+//const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session')
 const bcrypt = require('bcryptjs');
 
 //setup and middlewares
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
+
+app.use(bodyParser.urlencoded({extended: true}));
+//allows us to convert the request body from a Buffer into a string
+//then adds the data to the req(request) object under the key body
+//using our form as an example, the data in the input field will be avaialbe to us
+//in the req.body.longURL variable, which we can store in our urlDatabase object
+
+//sets up cookies
+// app.use(cookieParser());
+
+//sets up cookies session
+app.use(cookieSession({
+  name: 'session',
+  keys: ["key 1", "key 2", "key 3"],
+  maxAge: 24 * 60 * 60 * 1000
+}));
+
+//set ejs as view engine
+app.set("view engine", "ejs");
+
 
 //function to generate a random ID for new user IDs and for new tiny URLS
 const generateRandomString = function() {
@@ -36,16 +57,16 @@ const urlDatabase = {
 
 //object to store user information
 const users = {
-  "userRandomID": {
-    user_id: "userRandomID",
-    email: "user@example.com",
-    password: "purple"
-  },
-  "user2RandomID": {
-    user_id: "user2RandomID",
-    email: "user2@example.com",
-    password: "funk"
-  }
+  // "userRandomID": {
+  //   user_id: "userRandomID",
+  //   email: "user@example.com",
+  //   password: "purple"
+  // },
+  // "user2RandomID": {
+  //   user_id: "user2RandomID",
+  //   email: "user2@example.com",
+  //   password: "funk"
+  // }
 };
 
 //function to retrieve variables from a template
@@ -79,17 +100,7 @@ const urlsForUser = function(id) {
   return urls;
 };
 
-app.use(bodyParser.urlencoded({extended: true}));
-//allows us to convert the request body from a Buffer into a string
-//then adds the data to the req(request) object under the key body
-//using our form as an example, the data in the input field will be avaialbe to us
-//in the req.body.longURL variable, which we can store in our urlDatabase object
 
-//sets up cookies
-app.use(cookieParser());
-
-//set ejs as view engine
-app.set("view engine", "ejs");
 
 
 //server sends a response
@@ -110,7 +121,8 @@ app.get("/urls.json", (req, res) => {
 //post route to receive the new tiny url from form submission
 //and redirect to tiny url page
 app.post("/urls", (req, res) => {
-  const userID = req.cookies["user_id"];
+  //const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   
   if(userID) {
     const tinyURL = generateRandomString();
@@ -125,7 +137,8 @@ app.post("/urls", (req, res) => {
 //route for all urls
 //includes ejs template object
 app.get("/urls", (req, res) => {
-  const inputUserID = req.cookies["user_id"];
+  //const inputUserID = req.cookies["user_id"];
+  const inputUserID = req.session.user_id;
   const urls = urlsForUser(inputUserID);
   const user = users[inputUserID];
   const templateVars = { inputUserID, urls, user };
@@ -141,7 +154,8 @@ app.get("/urls", (req, res) => {
 //get route to show the form for making a tiny URL
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    user: users[req.cookies["user_id"]]
+    //user: users[req.cookies["user_id"]]
+    user: req.session.user_id
   };
 
   if(!templateVars.user) {
@@ -154,7 +168,8 @@ app.get("/urls/new", (req, res) => {
 //route for one single shortURL
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const userInputID = req.cookies["user_id"];
+  //const userInputID = req.cookies["user_id"];
+  const userInputID = req.session.user_id;
   
    //if the url doesn't exist
    if (!urlDatabase[shortURL]) {
@@ -174,7 +189,8 @@ app.get("/urls/:shortURL", (req, res) => {
 
 //Update long URL's short URL
 app.post("/urls/:shortURL", (req, res) => {
-  const userInputID = req.cookies["user_id"];
+  //const userInputID = req.cookies["user_id"];
+  const userInputID = req.session.user_id;
   const shortURL = req.params.shortURL;
 
   //if the url doesn't exist
@@ -194,7 +210,8 @@ app.post("/urls/:shortURL", (req, res) => {
 
 //delete URL
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const userInputID = req.cookies["user_id"];
+  //const userInputID = req.cookies["user_id"];
+  const userInputID = req.session.user_id
   const shortURL = req.params.shortURL;
 
    //if the url doesn't exist
@@ -240,14 +257,16 @@ app.post("/login", (req, res) => {
   
   //set cookie as user_id
   } else {
-    res.cookie('user_id', user.user_id);
+    //res.cookie('user_id', user.user_id);
+    req.session.user_id = user.user_id;
     res.redirect("/urls");
   }
 });
 
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: users[req.cookies["user_id"]]
+    //user: users[req.cookies["user_id"]]
+    user: users[req.session.user_id]
   };
 
   if (!templateVars.user) {
@@ -260,14 +279,17 @@ app.get("/login", (req, res) => {
 //logout
 app.post("/logout", (req, res) => {
   
-  res.clearCookie('user_id');
+  //res.clearCookie('user_id');
+  //clear cookie session
+  req.session = null;
   res.redirect("/urls");
 });
 
 //register
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: users[req.cookies["user_id"]]
+    //user: users[req.cookies["user_id"]]
+    user: req.session.user_id
   };
 
   if(!templateVars.user) {
@@ -302,7 +324,8 @@ app.post("/register", (req, res) => {
     console.log("user DB", users)
     
     //set cookie to user_id
-    res.cookie('user_id', users[newUser]["user_id"]);
+    //res.cookie('user_id', users[newUser]["user_id"]);
+    req.session.user_id = users[newUser].user_id;
     res.redirect("/urls");
   }
 });
