@@ -112,13 +112,28 @@ app.post("/urls", (req, res) => {
   res.status(401).send("Must be logged in to create a new tiny url.");
 });
 
+const urlsForUser = function(id) {
+  const urls = {};
+  for (let shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      urls[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  console.log(urls)
+  return urls;
+};
 //route for all urls
 //includes ejs template object
 app.get("/urls", (req, res) => {
-  const templateVars = {
-    urls: urlDatabase, //passes the database/object to the urls_index page
-    user: users[req.cookies["user_id"]]
-  };
+  const inputUserID = req.cookies["user_id"];
+  const urls = urlsForUser(inputUserID);
+  const user = users[inputUserID];
+  const templateVars = { inputUserID, urls, user };
+
+  //if user not logged in.
+  if (!inputUserID) {
+    return res.send("User must login to access URLS.")
+  }
 
   res.render("urls_index", templateVars);
 });
