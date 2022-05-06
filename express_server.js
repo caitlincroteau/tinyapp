@@ -3,6 +3,7 @@ const express = require("express");
 //const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session')
 const bcrypt = require('bcryptjs');
+const getUserByEmail = require('./helpers');
 
 //setup and middlewares
 const app = express();
@@ -78,16 +79,7 @@ const users = {
 //   return templateVars;
 // };
 
-//if input email matches db email, return the user object. Else, return undefined.
-const userLookup = function(usersDB, inputEmail) {
-  for (let userId in usersDB) {
-    let email = usersDB[userId]["email"];
-    if (inputEmail === email) {
-      return usersDB[userId];
-    }
-  }
-  return undefined;
-};
+
 
 //returns urls object of urls that match input user id with user id in urlDatabse
 const urlsForUser = function(id) {
@@ -245,7 +237,7 @@ app.get("/u/:shortURL", (req, res) => {
 //login
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  const user = userLookup(users, email);
+  const user = getUserByEmail(email, users);
 
   //if user not in db
   if (!user) {
@@ -301,7 +293,7 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
-  const user = userLookup(users, email);
+  const user = getUserByEmail(email, users);
  
   //if no email or password entered
   if (email === "" || password === "") {
