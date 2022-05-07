@@ -51,7 +51,25 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-//post route to receive the new tiny url from form submission and redirect to tiny url page
+
+//get route for urls index page
+//includes ejs template object
+app.get("/urls", (req, res) => {
+  const inputUserID = req.session.user_id;
+  const urls = urlsForUser(inputUserID, urlDatabase);
+  const user = users[inputUserID];
+  const templateVars = { inputUserID, urls, user };
+
+  //if user not logged in.
+  if (!inputUserID) {
+    return res.status(401).send("<html><body>Please <a href ='/login'>login</a> or <a href ='/register'>register</a> to access URL list.</body></html>\n")
+  }
+
+  res.status(200).render("urls_index", templateVars);
+});
+
+
+//post route to create a new short URL and redirect to short url page
 app.post("/urls", (req, res) => {
   const userID = req.session.user_id;
   
@@ -62,28 +80,11 @@ app.post("/urls", (req, res) => {
     return res.status(201).redirect("/urls/" + tinyURL);
   }
 
-  res.status(401).send("Must be logged in to create a new Tiny URL.");
+  res.status(401).send("<html><body>Please <a href ='/login'>login</a> or <a href ='/register'>register</a> to create a new Tiny URL.</body></html>\n");
 });
 
 
-//get route for all urls
-//includes ejs template object
-app.get("/urls", (req, res) => {
-  const inputUserID = req.session.user_id;
-  const urls = urlsForUser(inputUserID, urlDatabase);
-  const user = users[inputUserID];
-  const templateVars = { inputUserID, urls, user };
-
-  //if user not logged in.
-  if (!inputUserID) {
-    return res.status(401).send("Must be logged in to access URL list.");
-  }
-
-  res.status(200).render("urls_index", templateVars);
-});
-
-
-//get route to show the form for making a tiny URL
+//get route to show the create new short url page
 app.get("/urls/new", (req, res) => {
   const userID = req.session.user_id;
   
@@ -114,7 +115,7 @@ app.get("/urls/:shortURL", (req, res) => {
   
   //if user is not logged in or short url doesn't belong to user
   if (!userInputID || urlDatabase[shortURL].userID !== userInputID) {
-    return res.status(401).send("Must be logged in as correct user to view Tiny URL.");
+    return res.status(401).send("<html><body>Please <a href ='/login'>login</a> as the correct user to view this Tiny URL.</body></html>\n");
   }
 
   const templateVars = { shortURL, longURL, user: users[userInputID] };
@@ -136,7 +137,7 @@ app.post("/urls/:shortURL", (req, res) => {
 
   //if user is not logged in or short url doesn't belong to user
   if (!userInputID || userInputID !== urlDatabase[shortURL].userID) {
-    return res.status(401).send("You do not have permission to edit this Tiny URL");
+    return res.status(401).send("<html><body>Please login as the correct user to edit this Tiny URL.</body></html>\n");
   }
 
   //update long url in databse and redirect to /urls
@@ -158,7 +159,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
   //if user not logged in or short url doesn't belong to user
   if (!userInputID || userInputID !== urlDatabase[shortURL].userID) {
-    return res.status(401).send("You do not have permission to delete this Tiny URL");
+    return res.status(401).send("<html><body>Please login as the correct user to delete this Tiny URL.</body></html>\n");
   }
 
   //delete url from database and redirect
