@@ -6,8 +6,9 @@ Users must register or login to create and store short URLs in their user profil
 
 ## Final Product
 
-!["screenshot description"](#)
-!["screenshot description"](#)
+!["Animated GIF of editing short URL"](https://github.com/caitlincroteau/tinyapp/blob/main/docs/tinyApp.gif?raw=true)
+!["Screenshot of Register page"](https://github.com/caitlincroteau/tinyapp/blob/main/docs/register-page.png?raw=true)
+!["Screenshot of URLs page"](https://github.com/caitlincroteau/tinyapp/blob/main/docs/urls-page.png?raw=true)
 
 ## Dependencies
 
