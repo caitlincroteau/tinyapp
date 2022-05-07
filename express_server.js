@@ -33,10 +33,39 @@ app.set("view engine", "ejs");
 
 
 //new URL databse
-const urlDatabase = {};
+const urlDatabase = {
+  // b6UTxQ: {
+  //   longURL: "https://www.tsn.ca",
+  //   userID: "userRandomID"
+  // },
+  // i3BoGr: {
+  //   longURL: "https://www.google.ca",
+  //   userID: "user2RandomID"
+  // },
+  // i3BoGr: {
+  //   longURL: "https://www.cats.com",
+  //   userID: "user3RandomID"
+  // }
+};
 
 //object to store user information
-const users = {};
+const users = {
+  // "userRandomID": {
+  //   id: "userRandomID", 
+  //   email: "user@example.com", 
+  //   password: bcrypt.hashSync("purple-monkey-dinosaur", 10)
+  // },
+  // "user2RandomID": {
+  //   id: "user2RandomID", 
+  //   email: "user2@example.com", 
+  //   password: bcrypt.hashSync("dishwasher-funk", 10)
+  // },
+  // "user3RandomID": {
+  //   id: "user3RandomID", 
+  //   email: "user3@example.com", 
+  //   password: bcrypt.hashSync("hello-planet", 10)
+  // }
+};
 
 //function to retrieve variables from a template
 // function getTemplateVars(req) {
@@ -100,7 +129,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const templateVars = {
     //user: users[req.cookies["user_id"]]
-    user: req.session.user_id
+    user: users[req.session.user_id]
   };
 
   if(!templateVars.user) {
@@ -234,7 +263,7 @@ app.post("/logout", (req, res) => {
 app.get("/register", (req, res) => {
   const templateVars = {
     //user: users[req.cookies["user_id"]]
-    user: req.session.user_id
+    user: users[req.session.user_id]
   };
 
   if(!templateVars.user) {
