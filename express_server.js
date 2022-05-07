@@ -1,4 +1,4 @@
-//REQUIREMENTS
+// ----------------------- REQUIREMENTS
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -8,7 +8,13 @@ const { getUserByEmail } = require('./helpers');
 const { generateRandomString } = require('./helpers');
 const { urlsForUser } = require('./helpers');
 
-//SETUP AND MIDDLEWARES
+//URL databse
+const urlDatabase = {};
+
+//users database
+const users = {};
+
+// ----------------------- SETUP AND MIDDLEWARES
 const app = express();
 const PORT = 8080;
 
@@ -28,21 +34,15 @@ app.use(cookieSession({
 //set ejs as view engine
 app.set("view engine", "ejs");
 
-//URL databse
-const urlDatabase = {};
-
-//users database
-const users = {};
-
-//ROUTES
+// ----------------------- ROUTES / ENDPOINTS
 
 //server sends a response
 app.get("/", (req, res) => {
-  res.send("Hello");
+  res.status(200).redirect("/urls");
 });
 
 app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+  res.status(200).send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 //server sends a JSON response: parameter (the urlDatabase object) converted to:
@@ -55,14 +55,16 @@ app.get("/urls.json", (req, res) => {
 app.post("/urls", (req, res) => {
   const userID = req.session.user_id;
   
+  //if user is logged in, create short url, update database and redirect to short url page
   if (userID) {
     const tinyURL = generateRandomString();
     urlDatabase[tinyURL] = { longURL: req.body.longURL, userID: userID };
-    return res.redirect("/urls/" + tinyURL);
+    return res.status(201).redirect("/urls/" + tinyURL);
   }
 
-  res.status(401).send("Must be logged in to create a new tiny url.");
+  res.status(401).send("Must be logged in to create a new Tiny URL.");
 });
+
 
 //get route for all urls
 //includes ejs template object
@@ -74,152 +76,177 @@ app.get("/urls", (req, res) => {
 
   //if user not logged in.
   if (!inputUserID) {
-    return res.send("User must login to access URLS.");
+    return res.status(401).send("Must be logged in to access URL list.");
   }
 
-  res.render("urls_index", templateVars);
+  res.status(200).render("urls_index", templateVars);
 });
+
 
 //get route to show the form for making a tiny URL
 app.get("/urls/new", (req, res) => {
+  const userID = req.session.user_id;
+  
+  //if user is not logged
+  if (!userID) {
+    return res.status(200).redirect("/login");
+  }
+
   const templateVars = {
-    user: users[req.session.user_id]
+    user: users[userID]
   };
 
-  if (!templateVars.user) {
-    return res.redirect("/login");
-  }
-  
-  res.render("urls_new", templateVars);
+  res.status(200).render("urls_new", templateVars);
 });
+
 
 //get route for one single shortURL
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const userInputID = req.session.user_id;
   
   //if the url doesn't exist
   if (!urlDatabase[shortURL]) {
-    return res.send("The short URL does not exist.");
+    return res.status(404).send("The Tiny URL does not exist.");
   }
 
+  const userInputID = req.session.user_id;
   const longURL = urlDatabase[shortURL].longURL;
-  const templateVars = { shortURL, longURL, user: users[userInputID] };
-
+  
   //if user is not logged in or short url doesn't belong to user
   if (!userInputID || urlDatabase[shortURL].userID !== userInputID) {
-    return res.status(401).send("Must be logged in as correct user to see short URL.");
+    return res.status(401).send("Must be logged in as correct user to view Tiny URL.");
   }
+
+  const templateVars = { shortURL, longURL, user: users[userInputID] };
   
-  res.render("urls_show", templateVars);
+  res.status(200).render("urls_show", templateVars);
 });
+
 
 //post route to update long URL's short URL
 app.post("/urls/:shortURL", (req, res) => {
-  const userInputID = req.session.user_id;
   const shortURL = req.params.shortURL;
 
   //if the url doesn't exist
   if (!urlDatabase[shortURL]) {
-    return res.send("The short URL does not exist.");
+    return res.status(404).send("The Tiny URL does not exist.");
   }
+
+  const userInputID = req.session.user_id;
 
   //if user is not logged in or short url doesn't belong to user
   if (!userInputID || userInputID !== urlDatabase[shortURL].userID) {
-    return res.status(401).send("You do not have permission to edit this short URL");
+    return res.status(401).send("You do not have permission to edit this Tiny URL");
   }
 
+  //update long url in databse and redirect to /urls
   urlDatabase[shortURL].longURL = req.body.updatedURL;
-
-  res.redirect("/urls");
+  res.status(200).redirect("/urls");
 });
+
 
 //post route to delete URL from database
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const userInputID = req.session.user_id;
   const shortURL = req.params.shortURL;
 
   //if the url doesn't exist
   if (!urlDatabase[shortURL]) {
-    return res.send("The short URL does not exist.");
+    return res.status(404).send("The Tiny URL does not exist.");
   }
+
+  const userInputID = req.session.user_id;
 
   //if user not logged in or short url doesn't belong to user
   if (!userInputID || userInputID !== urlDatabase[shortURL].userID) {
-    return res.status(401).send("You do not have permission to delete this short URL");
+    return res.status(401).send("You do not have permission to delete this Tiny URL");
   }
 
+  //delete url from database and redirect
   delete urlDatabase[req.params.shortURL];
-
-  res.redirect("/urls");
+  res.status(200).redirect("/urls");
 });
+
 
 //get route to allow anyone to use shortURL
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   
+  //if short URL doesn't exit
   if (!urlDatabase[shortURL]) {
-    return res.send("Short URL does not exist.");
+    return res.status(400).send("Tiny URL does not exist.");
   }
 
+  //redirect to long URL
   const longURL = urlDatabase[shortURL].longURL;
-
-  res.redirect(longURL);
+  res.status(200).redirect(longURL);
 });
+
 
 //post route for login
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   const user = getUserByEmail(email, users);
 
-  //if user not in db
+  //if user not in database
   if (!user) {
     res.status(403).send("Email not found in database.");
   
-    //if hashed passwords don't match
+  //if hashed passwords don't match
   } else if (!bcrypt.compareSync(password, user.password)) {
     res.status(403).send("Incorrect password.");
   
-  //set cookie as user_id
+  //set cookie as user_id and redirect
   } else {
     req.session.user_id = user.user_id;
-    res.redirect("/urls");
+    res.status(200).redirect("/urls");
   }
 });
+
 
 //get route to show login
 app.get("/login", (req, res) => {
+  const user = req.session.user_id;
+  
+  //if user already logged in, redirect to /urls
+  if (user) {
+    return res.status(200).redirect("/urls");
+  }
+
+  //show login page
   const templateVars = {
-    user: users[req.session.user_id]
+    user: users[user]
   };
 
-  if (!templateVars.user) {
-    return res.render("login", templateVars);
-  }
-  
-  res.redirect("/urls");
+  res.status(200).render("login", templateVars);
 });
+
 
 //post route for logout
 app.post("/logout", (req, res) => {
   
-  //clear cookie session
+  //clear cookie session and redirect
   req.session = null;
   res.redirect("/urls");
 });
 
+
 //get route to show register
 app.get("/register", (req, res) => {
+  const user = req.session.user_id;
+  
+  //if user already loggin in, redirect to /urls
+  if (user) {
+    return res.status(200).redirect("urls");
+  }
+  
+  //show register page
   const templateVars = {
-    user: users[req.session.user_id]
+    user: users[user]
   };
 
-  if (!templateVars.user) {
-    return res.render("register",templateVars);
-  }
-
-  res.redirect("urls");
+  res.status(200).render("register",templateVars);
 });
+
 
 //post route to register
 app.post("/register", (req, res) => {
@@ -244,11 +271,10 @@ app.post("/register", (req, res) => {
       email: email,
       password: hashedPassword
     };
-    console.log("user DB", users);
     
-    //set cookie to user_id
+    //set cookie to user_id and redirect to /urls.
     req.session.user_id = users[newUser].user_id;
-    res.redirect("/urls");
+    res.status(200).redirect("/urls");
   }
 });
 
