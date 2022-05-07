@@ -62,7 +62,7 @@ describe('urlsForUser', function() {
         longURL: "https://www.tsn.ca",
         userID: "userRandomID"
       },
-      i3BoGr: {
+      r5kTw2: {
         longURL: "https://www.cats.com",
         userID: "userRandomID"
       }
