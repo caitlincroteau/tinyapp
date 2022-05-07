@@ -30,5 +30,3 @@ Users must register or login to create and store short URLs in their user profil
 
 - If you have nodemon installed, run the sever using the `npm start` command.
 - To run tests in the test directory, use the `mocha` command.
-
-

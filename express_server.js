@@ -76,7 +76,10 @@ app.post("/urls", (req, res) => {
   //if user is logged in, create short url, update database and redirect to short url page
   if (userID) {
     const tinyURL = generateRandomString();
+
     urlDatabase[tinyURL] = { longURL: req.body.longURL, userID: userID };
+   
+    
     return res.status(201).redirect("/urls/" + tinyURL);
   }
 
@@ -127,7 +130,7 @@ app.get("/urls/:shortURL", (req, res) => {
 //post route to update long URL's short URL
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-
+  
   //if the url doesn't exist
   if (!urlDatabase[shortURL]) {
     return res.status(404).send("The Tiny URL does not exist.");
@@ -139,7 +142,7 @@ app.post("/urls/:shortURL", (req, res) => {
   if (!userInputID || userInputID !== urlDatabase[shortURL].userID) {
     return res.status(401).send("<html><body>Please login as the correct user to edit this Tiny URL.</body></html>\n");
   }
-
+  
   //update long url in databse and redirect to /urls
   urlDatabase[shortURL].longURL = req.body.updatedURL;
   res.status(200).redirect("/urls");
@@ -179,7 +182,12 @@ app.get("/u/:shortURL", (req, res) => {
 
   //redirect to long URL
   const longURL = urlDatabase[shortURL].longURL;
-  res.status(200).redirect(longURL);
+
+  if (longURL.startsWith("http")) {
+    return res.status(200).redirect(longURL);
+  }
+
+  return res.status(200).redirect(`http://${longURL}`);
 });
 
 
