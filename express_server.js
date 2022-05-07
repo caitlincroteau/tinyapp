@@ -62,7 +62,7 @@ app.get("/urls", (req, res) => {
 
   //if user not logged in.
   if (!inputUserID) {
-    return res.status(401).send("<html><body>Please <a href ='/login'>login</a> or <a href ='/register'>register</a> to access URL list.</body></html>\n")
+    return res.status(401).send("<html><body>Please <a href ='/login'>login</a> or <a href ='/register'>register</a> to access URL list.</body></html>\n");
   }
 
   res.status(200).render("urls_index", templateVars);
@@ -285,7 +285,3 @@ app.listen(PORT, () => {
 });
 
 
-//Do I need to implement these edge case (from URL shortening part 2):
-// What would happen if a client requests a non-existent shortURL?
-// What happens to the urlDatabase when the server is restarted?
-// What type of status code do our redirects have? What does this status code mean?
