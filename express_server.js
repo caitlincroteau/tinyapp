@@ -279,11 +279,11 @@ app.post("/register", (req, res) => {
  
   //if no email or password entered
   if (email === "" || password === "") {
-    res.status(404).send("Email and password fields cannot be left blank.");
+    res.status(400).send("Email and password fields cannot be left blank.");
 
   //if email is already in the database
   } else if (user !== undefined && user.email === email) {
-    res.status(404).send("An account with that email address already exists.");
+    res.status(400).send("An account with that email address already exists.");
 
   } else {
     //add new user
